@@ -4,13 +4,12 @@ import java.util.Scanner;
 
 public class InventoryClient {
     static final int DEFAULT_PORT=2000;
-	static final String DEFAULT_HOST="127.0.0.1"; 
+	static final String DEFAULT_HOST="127.0.0.1";
 
 	public static void main(String[] args) {
 		String servidor=DEFAULT_HOST;
 		int port=DEFAULT_PORT;
-		Inventory inventory = new Inventory();
-		String menu = "1 - Get Inventory\n2 - Change Inventory\n0 - Exit\n Choose an option: ";
+		String menu = " - Change Inventory - \n1 - Maça\n2 - Banana\n3 - Pera\n0 - Exit\n";
 		String itemsMenu = "1 - Maça\n2 - Banana\n3 - Pera\n Choose an option: ";
 		int option = -1;
 		Scanner sc = new Scanner(System.in);
@@ -56,13 +55,17 @@ public class InventoryClient {
 	
 				PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 			String request = null;
+
+			ThreadRequest thread = new ThreadRequest();
+
 			do{
 				System.out.println(menu);
+				System.out.println("Choose an option: ");
 				sc = new Scanner(System.in);
 				if(sc.hasNextInt())
 				option = sc.nextInt();
 				sc.nextLine();
-			} while(option > 2 || option < 0);
+			} while(option > 3 || option < 0);
 
 			switch(option){
 				case 1:
@@ -112,7 +115,7 @@ public class InventoryClient {
                 msg.append((char) value);
             }
 
-			inventory = inventory.fromString(msg.toString());
+			// inventory = inventory.fromString(msg.toString());
 
 			System.out.println("Response=" + msg.toString());
 		// Close the Socket

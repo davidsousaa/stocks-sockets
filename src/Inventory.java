@@ -41,18 +41,18 @@ public class Inventory {
         return result.toString();
     }
 
-    public Inventory fromString(String string) {
-        Inventory inventory = new Inventory();
+    /* public Inventory fromString(String string) {
+        Inventory newInventory = new Inventory();
 
         StringBuilder msg = new StringBuilder(string);
         String[] lines = msg.toString().split("\n");
 
         for (String line : lines) {
             String[] parts = line.split(" : ");
-            inventory.inventory.put(parts[0], Integer.parseInt(parts[1]));
+            newInventory.inventory.put(parts[0], Integer.parseInt(parts[1]));
         }
 
-        return inventory;
-    }
+        return newInventory;
+    } */
 
 }

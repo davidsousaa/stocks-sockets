@@ -40,7 +40,7 @@ public class GetInventoryRequestHandler extends Thread {
 				newValue = Integer.parseInt(newMsg[2]);
 				if (newMsg[2].startsWith("-")) inventory.changeQuantity(key, -newValue); 
 				else inventory.changeQuantity(key, newValue);
-				response = "STOCK_UPDATED;" + inventory;
+				response = "STOCK_UPDATED";
 				System.out.println(inventory.toString());
 			} else {
 				response = "STOCK_ERROR: invalid Command";
