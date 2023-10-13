@@ -98,15 +98,18 @@ public class InventoryClient {
 
 				System.out.println("Request = " + request);
 
-				out.println(request);			
-				StringBuilder msg = new StringBuilder();
-				
-				int value = 0;
-				while ((value  = in.read()) != -1) {
-					msg.append((char) value);
-				}
+				out.println(request);
+				System.out.println("Request sent!");
+				String msg = in.readLine();
+				System.out.println(msg);
 
-				if(msg.toString().equals("STOCK_UPDATED")) threadRequest.restart();
+				if(msg.toString().startsWith("STOCK_UPDATED")) {
+					try {
+						threadRequest.restart();
+					} catch (InterruptedException e) {
+						System.out.println("Erro na execucao do servidor: " + e);
+					}
+				}
 
 				//if(msg.toString().equals("STOCK_UPDATED")) threadRequest(out, in);
 

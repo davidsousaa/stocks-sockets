@@ -11,7 +11,7 @@ public class ThreadRequest implements Runnable {
         t.start();
     }
 
-    public void restart() {
+    public void restart() throws InterruptedException {
         t = new Thread(this, "ThreadRequest");
         t.start();
     }
