@@ -6,6 +6,20 @@ public class InventoryClient {
     static final int DEFAULT_PORT=2000;
 	static final String DEFAULT_HOST="127.0.0.1";
 
+	/*public static void threadRequest(PrintWriter out, BufferedReader in) throws IOException{
+		int value = 1;
+		do {
+			out.println("STOCK_REQUEST");
+			if(in.readLine().equals("STOCK_UPDATED")) value = -1;
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				System.out.println("Erro na execucao do servidor: " + e);
+				System.exit(1);
+			}
+		} while  (value == 1 );
+	}*/
+
 	public static void main(String[] args) {
 		String servidor=DEFAULT_HOST;
 		int port=DEFAULT_PORT;
@@ -47,53 +61,61 @@ public class InventoryClient {
 
 			String request = null;
 
-			ThreadRequest thread = new ThreadRequest();
+			//threadRequest(out, in);
+			ThreadRequest threadRequest = new ThreadRequest();
+			do {
+				do{
+					System.out.println(menu);
+					sc = new Scanner(System.in);
+					if(sc.hasNextInt())
+					option = sc.nextInt();
+					sc.nextLine();
+					System.out.println("Quantity: ");
+					quantity = sc.nextInt();
+					sc.nextLine();
+				} while(option > 3 || option < 0);
 
-			do{
-				System.out.println(menu);
-				sc = new Scanner(System.in);
-				if(sc.hasNextInt())
-				option = sc.nextInt();
-				sc.nextLine();
-				System.out.println("Quantity: ");
-				quantity = sc.nextInt();
-				sc.nextLine();
-			} while(option > 3 || option < 0);
+				switch(option){
+					case 1:
+						request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
+						break;
+					case 2:
+						request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
+						break;
+					case 3:
+						request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
+						break;
+					case 0:
+						threadRequest.t.interrupt();
+						sc.close();
+						client.close();
+						System.out.println("Terminou a ligacao!");
+						break;
+					default:
+						System.out.println("Invalid option!");
+						break;
+				}
 
-			switch(option){
-				case 1:
-					request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
-					break;
-				case 2:
-					request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
-					break;
-				case 3:
-					request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
-					break;
-				default:
-					System.out.println("Invalid option!");
-					break;
-			}
+				System.out.println("Request = " + request);
 
-			System.out.println("Request = " + request);
+				out.println(request);			
+				StringBuilder msg = new StringBuilder();
+				
+				int value = 0;
+				while ((value  = in.read()) != -1) {
+					msg.append((char) value);
+				}
 
-			out.println(request);			
-			StringBuilder msg = new StringBuilder();
+				if(msg.toString().equals("STOCK_UPDATED")) threadRequest.restart();
+
+				//if(msg.toString().equals("STOCK_UPDATED")) threadRequest(out, in);
+
+				System.out.println("Response=" + msg.toString());
+
+			} while (option != 0);
 			
-			int value = 0;
-			while ((value  = in.read()) != -1) {
-                msg.append((char) value);
-            }
-
-			if(msg.toString().equals("STOCK_UPDATED")) thread.restart();
-
-			System.out.println("Response=" + msg.toString());
-			
-			sc.close();
-			client.close();
-			System.out.println("Terminou a ligacao!");
 		} catch (IOException e) {
-			System.out.println("Erro ao comunicar com o servidor: "+e);
+			System.out.println("Erro ao comunicar com o servidor: "+ e);
 			System.exit(1);
 		}
 	

@@ -10,8 +10,7 @@ public class GetInventoryRequestHandler extends Thread {
 	public GetInventoryRequestHandler(Socket ligacao, Inventory inventory) {
 		this.ligacao = ligacao;
 		this.inventory = inventory;
-		try
-		{	
+		try {	
 			this.in = new BufferedReader (new InputStreamReader(ligacao.getInputStream()));
 			
 			this.out = new PrintWriter(ligacao.getOutputStream());
