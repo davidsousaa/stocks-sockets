@@ -4,15 +4,14 @@ import java.util.Scanner;
 
 public class InventoryClient {
     static final int DEFAULT_PORT=2000;
-	static final String DEFAULT_HOST="127.0.0.1"; 
+	static final String DEFAULT_HOST="127.0.0.1";
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		String servidor=DEFAULT_HOST;
 		int port=DEFAULT_PORT;
-		Inventory inventory = new Inventory();
-		String menu = "1 - Get Inventory\n2 - Change Inventory\n0 - Exit\n Choose an option: ";
-		String itemsMenu = "1 - Maça\n2 - Banana\n3 - Pera\n Choose an option: ";
+		String menu = " - Change Inventory - \n1 - Pera\n2 - Banana\n3 - Maça\n0 - Exit\nChoose an option: ";
 		int option = -1;
+		int quantity = -1;
 		Scanner sc = new Scanner(System.in);
 		
 		if (args.length != 1) {
@@ -22,8 +21,6 @@ public class InventoryClient {
 
 		if (args.length >= 1) servidor = args[0];
 		if (args.length >= 2) port = Integer.parseInt(args[1]);
-	
-		// Create a representation of the IP address of the Server: API java.net.InetAddress
 
 		InetAddress serverAdress = null;
 
@@ -34,11 +31,11 @@ public class InventoryClient {
 			System.exit(1);
 		}
 
-		
-		// Create a client sockets (also called just "sockets"). A socket is an endpoint for communication between two machines: API java.net.Socket
-		
-		Socket client = null;
+		ThreadRequest threadRequest = new ThreadRequest();
 
+		do {
+
+		Socket client = null;
 		try {
 			client = new Socket(serverAdress, port);
 		} catch (IOException e) {
@@ -47,83 +44,54 @@ public class InventoryClient {
 		}
 
 		try {
-			
-			// Create a java.io.BufferedReader for the Socket; Use java.io.Socket.getInputStream() to obtain the Socket input stream
 				
-				BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-			
-			// Create a java.io. PrintWriter for the Socket; Use java.io.Socket.etOutputStream() to obtain the Socket output stream
-	
-				PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+			PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+
 			String request = null;
+			
 			do{
 				System.out.println(menu);
 				sc = new Scanner(System.in);
-				if(sc.hasNextInt())
-				option = sc.nextInt();
+				if(sc.hasNextInt()) option = sc.nextInt();
 				sc.nextLine();
-			} while(option > 2 || option < 0);
+				if(option == 1 || option == 2 || option == 3){
+					System.out.println("Quantity: ");
+					quantity = sc.nextInt();
+					sc.nextLine();
+				}
+			} while(option > 3 || option < 0);
 
 			switch(option){
 				case 1:
-					request = "STOCK_REQUEST";
+					request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
 					break;
 				case 2:
-					do {
-						System.out.println(itemsMenu);
-						if(sc.hasNextInt())
-						option = sc.nextInt();
-						sc.nextLine();
-						System.out.println("Quantity: ");
-						int quantity = sc.nextInt();
-						sc.nextLine();
-						switch (option) {
-							case 1:
-								request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
-								break;
-							case 2:
-								request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
-								break;
-							case 3:
-								request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
-								break;
-							default:
-								System.out.println("Invalid option!");
-								break;
-						}
-					} while(option > 3 || option < 1);
-					
+					request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
+					break;
+				case 3:
+					request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
 					break;
 				case 0:
-					System.exit(0);
+					request = "CLOSE";
+					sc.close();
+					client.close();
+					System.out.println("Terminou a ligacao!");
+					break;
+				default:
+					System.out.println("STOCK_ERROR: invalid Command");
 					break;
 			}
 
-			System.out.println("Request=" + request);
+			out.println(request);
+			String msg = in.readLine();
+			System.out.println(msg);
 
-			// write the request into the Socket
-			
-				out.println(request);			
-				StringBuilder msg = new StringBuilder();
-			
-			// Read the server response - read the data until null
-			int value = 0;
-			while ((value  = in.read()) != -1) {
-                msg.append((char) value);
-            }
-
-			inventory = inventory.fromString(msg.toString());
-
-			System.out.println("Response=" + msg.toString());
-		// Close the Socket
-			
-			sc.close();
-			client.close();
-			System.out.println("Terminou a ligacao!");
 		} catch (IOException e) {
-			System.out.println("Erro ao comunicar com o servidor: "+e);
+			System.out.println("STOCK_ERROR: "+ e);
 			System.exit(1);
 		}
 	
+		} while (option != 0);
 	}
 }
