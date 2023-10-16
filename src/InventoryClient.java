@@ -6,24 +6,10 @@ public class InventoryClient {
     static final int DEFAULT_PORT=2000;
 	static final String DEFAULT_HOST="127.0.0.1";
 
-	/*public static void threadRequest(PrintWriter out, BufferedReader in) throws IOException{
-		int value = 1;
-		do {
-			out.println("STOCK_REQUEST");
-			if(in.readLine().equals("STOCK_UPDATED")) value = -1;
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				System.out.println("Erro na execucao do servidor: " + e);
-				System.exit(1);
-			}
-		} while  (value == 1 );
-	}*/
-
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		String servidor=DEFAULT_HOST;
 		int port=DEFAULT_PORT;
-		String menu = " - Change Inventory - \n1 - Maça\n2 - Banana\n3 - Pera\n0 - Exit\nChoose an option: ";
+		String menu = " - Change Inventory - \n1 - Pera\n2 - Banana\n3 - Maça\n0 - Exit\nChoose an option: ";
 		int option = -1;
 		int quantity = -1;
 		Scanner sc = new Scanner(System.in);
@@ -44,9 +30,12 @@ public class InventoryClient {
 			System.out.println("Erro ao obter o endereco do servidor: "+e1);
 			System.exit(1);
 		}
-		
-		Socket client = null;
 
+		ThreadRequest threadRequest = new ThreadRequest();
+
+		do {
+
+		Socket client = null;
 		try {
 			client = new Socket(serverAdress, port);
 		} catch (IOException e) {
@@ -60,67 +49,49 @@ public class InventoryClient {
 			PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
 			String request = null;
-
-			//threadRequest(out, in);
-			ThreadRequest threadRequest = new ThreadRequest();
-			do {
-				do{
-					System.out.println(menu);
-					sc = new Scanner(System.in);
-					if(sc.hasNextInt())
-					option = sc.nextInt();
-					sc.nextLine();
+			
+			do{
+				System.out.println(menu);
+				sc = new Scanner(System.in);
+				if(sc.hasNextInt()) option = sc.nextInt();
+				sc.nextLine();
+				if(option == 1 || option == 2 || option == 3){
 					System.out.println("Quantity: ");
 					quantity = sc.nextInt();
 					sc.nextLine();
-				} while(option > 3 || option < 0);
-
-				switch(option){
-					case 1:
-						request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
-						break;
-					case 2:
-						request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
-						break;
-					case 3:
-						request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
-						break;
-					case 0:
-						threadRequest.t.interrupt();
-						sc.close();
-						client.close();
-						System.out.println("Terminou a ligacao!");
-						break;
-					default:
-						System.out.println("Invalid option!");
-						break;
 				}
+			} while(option > 3 || option < 0);
 
-				System.out.println("Request = " + request);
+			switch(option){
+				case 1:
+					request = "STOCK_UPDATE" + " " + "Pera" + " " + quantity;
+					break;
+				case 2:
+					request = "STOCK_UPDATE" + " " + "Banana" + " " + quantity;
+					break;
+				case 3:
+					request = "STOCK_UPDATE" + " " + "Maca" + " " + quantity;
+					break;
+				case 0:
+					request = "CLOSE";
+					sc.close();
+					client.close();
+					System.out.println("Terminou a ligacao!");
+					break;
+				default:
+					System.out.println("STOCK_ERROR: invalid Command");
+					break;
+			}
 
-				out.println(request);
-				System.out.println("Request sent!");
-				String msg = in.readLine();
-				System.out.println(msg);
+			out.println(request);
+			String msg = in.readLine();
+			System.out.println(msg);
 
-				if(msg.toString().startsWith("STOCK_UPDATED")) {
-					try {
-						threadRequest.restart();
-					} catch (InterruptedException e) {
-						System.out.println("Erro na execucao do servidor: " + e);
-					}
-				}
-
-				//if(msg.toString().equals("STOCK_UPDATED")) threadRequest(out, in);
-
-				System.out.println("Response=" + msg.toString());
-
-			} while (option != 0);
-			
 		} catch (IOException e) {
-			System.out.println("Erro ao comunicar com o servidor: "+ e);
+			System.out.println("STOCK_ERROR: "+ e);
 			System.exit(1);
 		}
 	
+		} while (option != 0);
 	}
 }

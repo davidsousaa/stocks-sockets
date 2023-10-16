@@ -16,7 +16,7 @@ public class GetInventoryRequestHandler extends Thread {
 			
 			this.out = new PrintWriter(ligacao.getOutputStream());
 		} catch (IOException e) {
-			System.out.println("Erro na execucao do servidor: " + e);
+			System.out.println("STOCK_ERROR: Erro na execucao do servidor: " + e);
 			System.exit(1);
 		}
 	}
@@ -25,6 +25,8 @@ public class GetInventoryRequestHandler extends Thread {
 		try {
 			System.out.println("Aceitou ligacao de cliente no endereco " + ligacao.getInetAddress() + " na porta " + ligacao.getPort());
 
+			//String msg = null;
+			//do {
 				String msg = in.readLine();
 				System.out.println("Request=" + msg);
 
@@ -39,19 +41,20 @@ public class GetInventoryRequestHandler extends Thread {
 					newValue = Integer.parseInt(newMsg[2]);
 					inventory.changeQuantity(key, newValue);
 					response = "STOCK_UPDATED";
-					System.out.println(inventory.toString());
+					System.out.println(inventory.readInventory());
 				} else {
 					response = "STOCK_ERROR: invalid Command";
 				}
 				System.out.println("Response=" + response);
 				out.println(response);
+			//} while (!msg.equals("CLOSE"));
 				
 			out.flush();
 			in.close();
 			out.close();
 			ligacao.close();
 		} catch (IOException e) {
-			System.out.println("Erro na execucao do servidor: " + e);
+			System.out.println("STOCK_ERROR: Erro na execucao do servidor: " + e);
 			System.exit(1);
 		}
 	}
