@@ -1,0 +1,3 @@
+Pera,15
+Banana,5
+Maça,10

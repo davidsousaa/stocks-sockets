@@ -1,3 +1,4 @@
+package Server;
 import java.io.*;
 import java.net.*;
 
@@ -6,7 +7,7 @@ public class ThreadRequest implements Runnable {
     String servidor = "127.0.0.1";
     int port = 2000;
 
-    ThreadRequest() {
+    public ThreadRequest() {
         t = new Thread(this, "ThreadRequest");
         t.start();
     }
