@@ -1,3 +1,3 @@
-Pera,5
+Pera,10
 Banana,5
-Maca,11
+Maca,15
