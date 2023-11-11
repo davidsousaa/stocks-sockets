@@ -8,17 +8,17 @@ import Server.ThreadRequest;
 
 public class InventoryClient {
     static final int DEFAULT_PORT=2000;
-	static final String DEFAULT_HOST="127.0.0.1";
+	static final String DEFAULT_HOST="localhost";
 
 	public static void main(String[] args) throws InterruptedException {
 		String servidor=DEFAULT_HOST;
 		int port=DEFAULT_PORT;
-		String menu = " - Change Inventory - \n1 - Pera\n2 - Banana\n3 - Maça\n0 - Exit\nChoose an option: ";
+		String menu = " - Change Inventory - \n1 - Pera\n2 - Banana\n3 - Maca\n0 - Exit\nChoose an option: ";
 		int option = -1;
 		int quantity = -1;
 		Scanner sc = new Scanner(System.in);
 		
-		if (args.length != 1) {
+		if (args.length < 1) {
 				System.out.println("Error: use java presencesClient <ip>");
 				System.exit(-1);
 		}

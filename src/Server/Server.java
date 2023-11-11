@@ -13,6 +13,7 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
     private ServerSocket serverSocket;
     static int DEFAULT_SOCKET_PORT=2000;
     static int DEFAULT_RMI_PORT=1999;
+    static String SERVICE_NAME="StockServer";
     private List<DirectNotification> directNotifications;
 
     public Server() throws IOException, RemoteException {
@@ -20,11 +21,10 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
         directNotifications = new ArrayList<>();
     }
 
-    public void runStockServer() throws IOException {
+    public void runSocketServer() throws IOException {
         try {
             serverSocket = new ServerSocket(DEFAULT_SOCKET_PORT);
-            System.out.println("Server wating for connections on port " + DEFAULT_SOCKET_PORT);
-
+            System.out.println("SocketServer wating for connections on port " + DEFAULT_SOCKET_PORT);
             while (true) {
                 Socket ligacao = serverSocket.accept();
                 GetInventoryRequestHandler handler = new GetInventoryRequestHandler(ligacao, inventory, this);
@@ -34,20 +34,24 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
             System.out.println("Erro na execucao do servidor: " + e);
             System.exit(1);
         }
-
     }
 
     public void runRMIServer() throws RemoteException {
         try {
             LocateRegistry.createRegistry(DEFAULT_RMI_PORT);
-            Registry registry = LocateRegistry.getRegistry(DEFAULT_RMI_PORT);
-            registry.rebind("StockServer", this);
-            System.out.println("RMI Server ready");
-        } catch (Exception e) {
+        } catch (RemoteException e) {
             System.out.println("RMI Server error: " + e);
             System.exit(1);
         }
+        try {
+            LocateRegistry.getRegistry(DEFAULT_RMI_PORT).rebind(SERVICE_NAME, this);
+        } catch (RemoteException e) {
+            System.out.println("RMI Server error: " + e);
+            System.exit(1);
+        }
+        System.out.println("RMIServer wating for connections on port " + DEFAULT_RMI_PORT);
     }
+        
 
     @Override
     public String stock_request() throws RemoteException {
@@ -60,19 +64,25 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
     }
 
     @Override
-    public void subscribe(DirectNotification client) throws RemoteException {
+    public String subscribe(DirectNotification client) throws RemoteException {
+        if (directNotifications.contains(client))
+            return "Already subscribed";
         directNotifications.add(client);
+        return "Subscribed";
     }
 
     @Override
-    public void unsubscribe(DirectNotification client) throws RemoteException {
+    public String unsubscribe(DirectNotification client) throws RemoteException {
+        if (!directNotifications.contains(client))
+            return "Not subscribed";
         directNotifications.remove(client);
+        return "Unsubscribed";
     }
 
     public void notifyAllClients(String message) throws RemoteException {
         for (DirectNotification client : directNotifications) {
             try {
-              client.stock_updated(message);  
+              client.stock_updated(message);
             } catch (RemoteException e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -83,8 +93,8 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
     public static void main(String[] args) throws IOException, RemoteException {
         try {
             Server server = new Server();
-            server.runStockServer();
             server.runRMIServer();
+            server.runSocketServer();
             System.out.println("Server ready");
         } catch (Exception e) {
             System.out.println("Erro na execucao do servidor: " + e);

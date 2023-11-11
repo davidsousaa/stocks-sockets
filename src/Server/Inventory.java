@@ -18,7 +18,7 @@ public class Inventory {
         } else {
             this.inventory.put("Pera", 5);
             this.inventory.put("Banana", 5);
-            this.inventory.put("Maça", 10);
+            this.inventory.put("Maca", 10);
             writeInventory(inventory);
         }
     }

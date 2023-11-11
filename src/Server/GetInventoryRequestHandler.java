@@ -37,13 +37,13 @@ public class GetInventoryRequestHandler extends Thread {
 				String [] newMsg = msg.split(" ");
 				
 				if (msg.startsWith("STOCK_REQUEST")) {
-					response = inventory.toString();
+					response = server.stock_request();
 					System.out.println(response);
 				} else if (msg.startsWith("STOCK_UPDATE")) {
 					String key = newMsg[1];
 					int newValue = 0;
 					newValue = Integer.parseInt(newMsg[2]);
-					inventory.changeQuantity(key, newValue);
+					server.stock_update(key, newValue);
 					response = "STOCK_UPDATED";
 					System.out.println(inventory.readInventory());
 				} else {
