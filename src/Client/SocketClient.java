@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 import Server.ThreadRequest;
 
-public class InventoryClient {
+public class SocketClient {
     static final int DEFAULT_PORT=2000;
 	static final String DEFAULT_HOST="localhost";
 

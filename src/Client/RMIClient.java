@@ -1,6 +1,5 @@
 package Client;
 
-import java.io.Serializable;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
@@ -8,7 +7,7 @@ import java.util.Scanner;
 import Server.DirectNotification;
 import Server.StockServer;
 
-public class RMIClient implements DirectNotification, Serializable{
+public class RMIClient implements DirectNotification{
     private StockServer server;
     static String SERVICE_NAME="StockServer";
     static String SERVICE_HOST="localhost";
