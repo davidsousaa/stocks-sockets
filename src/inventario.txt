@@ -1,0 +1,3 @@
+Pera,15
+Banana,11
+Maca,35
