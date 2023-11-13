@@ -8,13 +8,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Server extends UnicastRemoteObject implements Serializable, StockServer{
+public class Server extends UnicastRemoteObject implements StockServer{
     private Inventory inventory;
     private ServerSocket serverSocket;
     static int DEFAULT_SOCKET_PORT=2000;
     static int DEFAULT_RMI_PORT=1999;
     static String SERVICE_NAME="StockServer";
-    private List<DirectNotification> directNotifications;
+    private List<ClientConnected> directNotifications;
 
     public Server() throws IOException, RemoteException {
         inventory = new Inventory();
@@ -60,32 +60,36 @@ public class Server extends UnicastRemoteObject implements Serializable, StockSe
 
     @Override
     public String stock_update(String key, int newValue) throws RemoteException {
-        return inventory.changeQuantity(key, newValue);
+        String response = inventory.changeQuantity(key, newValue) + "\n" + inventory.toString();
+        this.notifyAllClients(response);
+        System.out.println(directNotifications.size() + " clients notified");
+        return response;
     }
 
     @Override
     public String subscribe(DirectNotification client) throws RemoteException {
-        if (directNotifications.contains(client))
-            return "Already subscribed";
-        directNotifications.add(client);
+        if (client == null) {
+            return "client is null";
+        }
+        ClientConnected clientInfo = new ClientConnected(client);
+        this.directNotifications.add(clientInfo);
         return "Subscribed";
     }
 
     @Override
     public String unsubscribe(DirectNotification client) throws RemoteException {
-        if (!directNotifications.contains(client))
-            return "Not subscribed";
+        if (client == null)
+            return "client is null";
         directNotifications.remove(client);
         return "Unsubscribed";
     }
 
     public void notifyAllClients(String message) throws RemoteException {
-        for (DirectNotification client : directNotifications) {
+        for (ClientConnected client : directNotifications) {
             try {
-              client.stock_updated(message);
+              client.notifyClient(message);
             } catch (RemoteException e) {
                 e.printStackTrace();
-                System.exit(1);
             }
         }
     }

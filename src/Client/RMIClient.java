@@ -1,13 +1,17 @@
 package Client;
 
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RemoteServer;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 
 import Server.DirectNotification;
 import Server.StockServer;
 
-public class RMIClient implements DirectNotification{
+public class RMIClient extends UnicastRemoteObject implements DirectNotification{
     private StockServer server;
     static String SERVICE_NAME="StockServer";
     static String SERVICE_HOST="localhost";
@@ -15,7 +19,7 @@ public class RMIClient implements DirectNotification{
     private boolean connected = false;
     private String menu = " - Change Inventory - \n1 - Stock Request\n2 - Stock Update\n3 - Subscribe\n4 - Unsubscribe\n0 - Exit\nChoose an option:";
 
-    public RMIClient() {
+    public RMIClient() throws RemoteException {
             connected = false;
     }
 
@@ -42,7 +46,7 @@ public class RMIClient implements DirectNotification{
                     System.out.println("Value:");
                     int newValue = scanner.nextInt();
                     try {
-                        System.out.println(server.stock_update(key, newValue));
+                        String can = server.stock_update(key, newValue);
                     
                     } catch (Exception e) {
                         System.out.println("Error: " + e);
@@ -90,7 +94,12 @@ public class RMIClient implements DirectNotification{
     }
 
     public static void main(String args[]) {
-        RMIClient client = new RMIClient();
+        RMIClient client = null;
+        try {
+            client = new RMIClient();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         client.connect(SERVICE_HOST, SERVICE_PORT);
         client.run();
     }   
@@ -99,5 +108,4 @@ public class RMIClient implements DirectNotification{
     public void stock_updated(String message) throws java.rmi.RemoteException {
         System.out.println(message);
     }
-
 }

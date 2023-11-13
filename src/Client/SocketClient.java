@@ -78,6 +78,7 @@ public class SocketClient {
 					break;
 				case 0:
 					request = "CLOSE";
+					out.println(request);
 					sc.close();
 					client.close();
 					System.out.println("Terminou a ligacao!");

@@ -43,9 +43,10 @@ public class GetInventoryRequestHandler extends Thread {
 					String key = newMsg[1];
 					int newValue = 0;
 					newValue = Integer.parseInt(newMsg[2]);
-					server.stock_update(key, newValue);
-					response = "STOCK_UPDATED";
+					response = server.stock_update(key, newValue);
 					System.out.println(inventory.readInventory());
+				}else if (msg.startsWith("CLOSE")) {
+					response = "Connection closed with client" + ligacao.getInetAddress();
 				} else {
 					response = "STOCK_ERROR: invalid Command";
 				}
