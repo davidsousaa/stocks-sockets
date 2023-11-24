@@ -19,8 +19,6 @@ public class SocketClient {
     static final int DEFAULT_PORT=2000;
 	static final String DEFAULT_HOST="localhost";
 	static PublicKey serverPublicKey;
-	static PublicKey publicKey;
-	static PrivateKey privateKey;
 
 	public static void main(String[] args) throws InterruptedException {
 		String servidor=DEFAULT_HOST;
@@ -29,8 +27,6 @@ public class SocketClient {
 		int option = -1;
 		int quantity = -1;
 		Scanner sc = new Scanner(System.in);
-		
-		generateKeys();
 
 		if (args.length < 1) {
 				System.out.println("Error: use java presencesClient <ip>");
@@ -120,7 +116,6 @@ public class SocketClient {
 			}
 
 			out.println(request);
-			out.println(Base64.getEncoder().encodeToString(signMessage(digestMessage(request).getBytes())));
 			out.flush();
 			String msg = in.readLine();
 			String[] parts = msg.split("-_-");
@@ -143,49 +138,11 @@ public class SocketClient {
 		} while (option != 0);
 	}
 
-	private static void generateKeys() {
-		try {
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(2048);
-			KeyPair pair = keyGen.generateKeyPair();
-			privateKey = pair.getPrivate();
-			publicKey = pair.getPublic();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	static String digestMessage(String message) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = digest.digest(message.getBytes());
-            return Base64.getEncoder().encodeToString(hashedBytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-	private static byte[] signMessage(byte[] message) {
-		try {
-			Signature rsa = Signature.getInstance("SHA256withRSA");
-			rsa.initSign(privateKey);
-			rsa.update(message);
-			return rsa.sign();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
 	static boolean verifySignature(String message, byte[] signature, byte[] publicKey) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = digest.digest(message.getBytes()); 
-            String hashedMessage = Base64.getEncoder().encodeToString(hashedBytes);
             Signature sign = Signature.getInstance("SHA256withRSA");
             sign.initVerify(KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey)));
-            sign.update(hashedMessage.getBytes());
+            sign.update(message.getBytes());
             byte[] decodedSignature = Base64.getDecoder().decode(signature);
             return sign.verify(decodedSignature);
         } catch (Exception e) {

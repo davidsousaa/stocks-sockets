@@ -30,32 +30,10 @@ public class GetInventoryRequestHandler extends Thread {
             System.out.println("Aceitou ligacao de cliente no endereco " + ligacao.getInetAddress() + " na porta " + ligacao.getPort());
 
             String msg = in.readLine();
-            byte[] signature = Base64.getDecoder().decode(in.readLine());
-            boolean signatureValid = server.verifySignature(msg, signature, server.get_pubkey());
+			System.out.println("Recebeu: " + msg);
+			String[] newMsg = msg.split(" ");
 
-            if (signatureValid) {
-                handleValidRequest(msg);
-            } else {
-                handleInvalidSignature();
-            }
-        } catch (IOException e) {
-            System.out.println("STOCK_ERROR: Erro na execucao do servidor: " + e);
-            System.exit(1);
-        } finally {
-            try {
-                in.close();
-                out.close();
-                ligacao.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleValidRequest(String msg) {
-        String[] newMsg = msg.split(" ");
-
-        if (msg.startsWith("STOCK_REQUEST")) {
+			 if (msg.startsWith("STOCK_REQUEST")) {
             try {
 				response = server.stock_request();
            		System.out.println(response);
@@ -81,12 +59,19 @@ public class GetInventoryRequestHandler extends Thread {
 
         out.println(response);
         out.flush();
-    }
 
-    private void handleInvalidSignature() {
-        response = "STOCK_ERROR: Invalid signature. Message rejected.";
-        out.println(response);
-        out.flush();
+        } catch (IOException e) {
+            System.out.println("STOCK_ERROR: Erro na execucao do servidor: " + e);
+            System.exit(1);
+        } finally {
+            try {
+                in.close();
+                out.close();
+                ligacao.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 
