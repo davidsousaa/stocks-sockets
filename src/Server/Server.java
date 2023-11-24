@@ -5,7 +5,10 @@ import java.net.*;
 import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class Server extends UnicastRemoteObject implements StockServer{
@@ -15,6 +18,8 @@ public class Server extends UnicastRemoteObject implements StockServer{
     static int DEFAULT_RMI_PORT=1999;
     static String SERVICE_NAME="StockServer";
     private List<ClientConnected> directNotifications;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
     //private List<String> ipList;
 
     public Server() throws IOException, RemoteException {
@@ -61,7 +66,9 @@ public class Server extends UnicastRemoteObject implements StockServer{
 
     @Override
     public String stock_request() throws RemoteException {
-        return inventory.toString();
+        String response = inventory.toString();
+        byte[] signature = signMessage(digestMessage(response));
+        return response + "-_-" + Base64.getEncoder().encodeToString(signature);
     }
 
     @Override
@@ -70,8 +77,9 @@ public class Server extends UnicastRemoteObject implements StockServer{
         if (directNotifications != null && directNotifications.size() > 0) {
             this.notifyAllClients(response);
         }
+        byte[] signature = signMessage(digestMessage(response));
         System.out.println(directNotifications.size() + " clients notified");
-        return response;
+        return response + "-_-" + Base64.getEncoder().encodeToString(signature);
     }
 
     @Override
@@ -129,11 +137,76 @@ public class Server extends UnicastRemoteObject implements StockServer{
         
     }
 
+    public void generateKeys() throws IOException {
+        try {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            KeyPair keyPair = keyGen.generateKeyPair();
+            publicKey = keyPair.getPublic();
+            privateKey = keyPair.getPrivate();
+        } catch (NoSuchAlgorithmException e) { 
+            e.printStackTrace();
+        }
+    }
+
+    boolean verifySignature(String message, byte[] signature, byte[] publicKey) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = digest.digest(message.getBytes()); 
+            String hashedMessage = Base64.getEncoder().encodeToString(hashedBytes);
+            Signature sign = Signature.getInstance("SHA256withRSA");
+            sign.initVerify(KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey)));
+            sign.update(hashedMessage.getBytes());
+            byte[] decodedSignature = Base64.getDecoder().decode(signature);
+            return sign.verify(decodedSignature);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public void processIncomingMessage(String message, byte[] signature) {
+        boolean signatureValid = verifySignature(message, signature, publicKey.getEncoded());
+        if (signatureValid) {
+            System.out.println("Processing message: " + message);
+        } else {
+            System.out.println("Invalid signature");
+        }
+    }
+
+    byte[] signMessage(String message) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(privateKey);
+            signature.update(message.getBytes());
+            return signature.sign();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public byte[] get_pubkey() {
+        return this.publicKey.getEncoded();
+    }
+
+    String digestMessage(String message) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = digest.digest(message.getBytes());
+            return Base64.getEncoder().encodeToString(hashedBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static void main(String[] args) throws IOException, RemoteException {
         try {
             Server server = new Server();
             server.runRMIServer();
             server.runSocketServer();
+            server.generateKeys();
             System.out.println("Server ready");
         } catch (Exception e) {
             System.out.println("Erro na execucao do servidor: " + e);
@@ -141,4 +214,5 @@ public class Server extends UnicastRemoteObject implements StockServer{
         }
         
     }
+
 }

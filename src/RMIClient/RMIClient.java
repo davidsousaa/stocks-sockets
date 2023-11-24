@@ -1,9 +1,12 @@
-package Client;
+package RMIClient;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Scanner;
 
 import Server.DirectNotification;
@@ -15,6 +18,7 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
     static String SERVICE_HOST="localhost";
     static int SERVICE_PORT=1999;
     private boolean connected = false;
+    PublicKey serverPublicKey;
     private String menu = " - Change Inventory - \n1 - Stock Request\n2 - Stock Update\n3 - Subscribe\n4 - Unsubscribe\n0 - Exit\nChoose an option:";
 
     public RMIClient() throws RemoteException {
@@ -70,6 +74,15 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
                 case 4:
                     try {
                         System.out.println(server.unsubscribe(this));
+                    } catch (Exception e) {
+                        System.out.println("Error: " + e);
+                    }
+                    break;
+                case 5:
+                    try {
+                        serverPublicKey = KeyFactory.getInstance("RSA")
+                                            .generatePublic(new X509EncodedKeySpec(server.get_pubkey()));
+                        System.out.println("Server public key: " + serverPublicKey);
                     } catch (Exception e) {
                         System.out.println("Error: " + e);
                     }

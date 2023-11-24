@@ -1,4 +1,4 @@
-package Client;
+package SocketClient;
 
 import java.io.Serializable;
 import java.rmi.Remote;
