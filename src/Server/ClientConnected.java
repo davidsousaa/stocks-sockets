@@ -16,7 +16,11 @@ public class ClientConnected {
         this.client.stock_updated(message);
     }
 
-    public DirectNotification getId() {
+    public int getId() {
+        return this.id;
+    }
+
+    public DirectNotification getClient() {
         return this.client;
     }
 

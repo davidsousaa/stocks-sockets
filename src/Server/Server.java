@@ -89,8 +89,13 @@ public class Server extends UnicastRemoteObject implements StockServer{
     public String unsubscribe(DirectNotification client) throws RemoteException {
         if (client == null)
             return "client is null";
-        directNotifications.remove(client);
-        return "Unsubscribed";
+        for (ClientConnected clientInfo : directNotifications) {
+            if (clientInfo.getClient().equals(client)) {
+                directNotifications.remove(clientInfo);
+                return "Unsubscribed";
+            }
+        }
+        return "Client not found";
     }
 
     public void notifyAllClients(String message) throws RemoteException {
