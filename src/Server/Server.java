@@ -15,10 +15,12 @@ public class Server extends UnicastRemoteObject implements StockServer{
     static int DEFAULT_RMI_PORT=1999;
     static String SERVICE_NAME="StockServer";
     private List<ClientConnected> directNotifications;
+    //private List<String> ipList;
 
     public Server() throws IOException, RemoteException {
         inventory = new Inventory();
         directNotifications = new ArrayList<>();
+        //ipList = new ArrayList<>();
     }
 
     public void runSocketServer() throws IOException {
@@ -26,9 +28,13 @@ public class Server extends UnicastRemoteObject implements StockServer{
             serverSocket = new ServerSocket(DEFAULT_SOCKET_PORT);
             System.out.println("SocketServer wating for connections on port " + DEFAULT_SOCKET_PORT);
             while (true) {
-                Socket ligacao = serverSocket.accept();
+                Socket ligacao = serverSocket.accept(); 
                 GetInventoryRequestHandler handler = new GetInventoryRequestHandler(ligacao, inventory, this);
                 handler.start();
+                /*String ip = ligacao.getInetAddress().toString();
+                if (!ipList.contains(ip) && ip != null) {
+                    ipList.add(ip);
+                }*/
             }
         } catch (IOException e) {
             System.out.println("Erro na execucao do servidor: " + e);
@@ -61,7 +67,9 @@ public class Server extends UnicastRemoteObject implements StockServer{
     @Override
     public String stock_update(String key, int newValue) throws RemoteException {
         String response = inventory.changeQuantity(key, newValue) + "\n" + inventory.toString();
-        this.notifyAllClients(response);
+        if (directNotifications != null && directNotifications.size() > 0) {
+            this.notifyAllClients(response);
+        }
         System.out.println(directNotifications.size() + " clients notified");
         return response;
     }
@@ -76,6 +84,7 @@ public class Server extends UnicastRemoteObject implements StockServer{
         return "Subscribed";
     }
 
+    //Not used
     @Override
     public String unsubscribe(DirectNotification client) throws RemoteException {
         if (client == null)
@@ -92,6 +101,27 @@ public class Server extends UnicastRemoteObject implements StockServer{
                 e.printStackTrace();
             }
         }
+
+        /*for (int i = 0; i < ipList.size(); i++) {
+            try {
+                String ip = ipList.get(i);
+                if (ip != null) {
+                    System.out.println("Trying to connect to: " + ip);
+                    Socket socket = new Socket(ip, DEFAULT_SOCKET_PORT);
+                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    out.println(message);
+                    out.flush();
+                    out.close();
+                    socket.close();
+                } else {
+                    System.out.println("Skipping null InetAddress at index " + i);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }*/
+        
+        
     }
 
     public static void main(String[] args) throws IOException, RemoteException {

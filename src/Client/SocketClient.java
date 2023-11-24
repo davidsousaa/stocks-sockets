@@ -53,6 +53,7 @@ public class SocketClient {
 			PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
 			String request = null;
+			int exit = 1;
 			
 			do{
 				System.out.println(menu);
@@ -60,9 +61,17 @@ public class SocketClient {
 				if(sc.hasNextInt()) option = sc.nextInt();
 				sc.nextLine();
 				if(option == 1 || option == 2 || option == 3){
-					System.out.println("Quantity: ");
-					quantity = sc.nextInt();
-					sc.nextLine();
+					do {
+						System.out.println("Quantity: ");
+						if(sc.hasNextInt()) {
+							quantity = sc.nextInt();
+							sc.nextLine();
+							exit = -1;
+						} else {
+							sc.nextLine();
+							System.out.println("Write a valid integer!");
+						}
+					} while(exit == 1);
 				}
 			} while(option > 3 || option < 0);
 

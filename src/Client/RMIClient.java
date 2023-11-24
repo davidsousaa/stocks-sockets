@@ -1,10 +1,8 @@
 package Client;
 
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RemoteServer;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 
@@ -30,8 +28,18 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
             return;
         }
         while (true) {
+            int option = -1;
             System.out.println(menu);
-            int option = scanner.nextInt();
+            do {
+                option = -1;
+                try {
+                    option = scanner.nextInt();
+                    scanner.nextLine();
+                } catch (Exception e) {
+                    System.out.println("Invalid option \nChoose an option: ");
+                    scanner.nextLine();
+                }
+            } while (option < 0 || option > 4);
             switch (option) {
                 case 1:
                     try {
