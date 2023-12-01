@@ -4,21 +4,21 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.Signature;
+import java.util.Base64;
 import java.util.Scanner;
 
-import Server.DirectNotification;
+import Server.SecureDirectNotificationInterface;
 import Server.StockServer;
 
-public class RMIClient extends UnicastRemoteObject implements DirectNotification{
+public class RMIClient extends UnicastRemoteObject implements SecureDirectNotificationInterface{
     private StockServer server;
     static String SERVICE_NAME="StockServer";
     static String SERVICE_HOST="localhost";
     static int SERVICE_PORT=1999;
     private boolean connected = false;
-    PublicKey serverPublicKey;
+    PublicKey serverPublicKey = null;
     private String menu = " - Change Inventory - \n1 - Stock Request\n2 - Stock Update\n3 - Subscribe\n4 - Unsubscribe\n0 - Exit\nChoose an option:";
 
     public RMIClient() throws RemoteException {
@@ -31,6 +31,13 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
             System.out.println("Not connected to server");
             return;
         }
+
+        try {
+            serverPublicKey = server.get_pubKey();
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+
         while (true) {
             int option = -1;
             System.out.println(menu);
@@ -78,15 +85,6 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
                         System.out.println("Error: " + e);
                     }
                     break;
-                case 5:
-                    try {
-                        serverPublicKey = KeyFactory.getInstance("RSA")
-                                            .generatePublic(new X509EncodedKeySpec(server.get_pubkey()));
-                        System.out.println("Server public key: " + serverPublicKey);
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e);
-                    }
-                    break;
                 case 0:
                     try {
                         server.unsubscribe(this);
@@ -128,5 +126,23 @@ public class RMIClient extends UnicastRemoteObject implements DirectNotification
     @Override
     public void stock_updated(String message) throws java.rmi.RemoteException {
         System.out.println(message);
+    }
+
+    @Override
+    public String stock_updated_signed(String message, String signature) throws java.rmi.RemoteException {
+        try {
+            message = message.trim();
+            Signature sig = Signature.getInstance("SHA256withRSA");
+            sig.initVerify(serverPublicKey);
+            sig.update(message.getBytes());
+            if (sig.verify(Base64.getDecoder().decode(signature))) {
+                System.out.println(message);
+            } else {
+                System.out.println("Signature failed");
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
+        return message;
     }
 }

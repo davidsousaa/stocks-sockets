@@ -37,7 +37,8 @@ public class ThreadRequest implements Runnable {
 			    PrintWriter out = new PrintWriter(client.getOutputStream(), true);
                 out.println("STOCK_REQUEST");
 			    while ((value  = in.read()) != -1) msg.append((char) value);
-                System.out.println(msg.toString());
+                String[] fullresponse = msg.toString().split("-_-");
+                System.out.println(fullresponse[0]);
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {

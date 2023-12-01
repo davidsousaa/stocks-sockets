@@ -6,7 +6,6 @@ import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.*;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -20,12 +19,11 @@ public class Server extends UnicastRemoteObject implements StockServer{
     private List<ClientConnected> directNotifications;
     private PublicKey publicKey;
     private PrivateKey privateKey;
-    //private List<String> ipList;
+  
 
     public Server() throws IOException, RemoteException {
         inventory = new Inventory();
         directNotifications = new ArrayList<>();
-        //ipList = new ArrayList<>();
     }
 
     public void runSocketServer() throws IOException {
@@ -33,13 +31,13 @@ public class Server extends UnicastRemoteObject implements StockServer{
             serverSocket = new ServerSocket(DEFAULT_SOCKET_PORT);
             System.out.println("SocketServer wating for connections on port " + DEFAULT_SOCKET_PORT);
             while (true) {
-                Socket ligacao = serverSocket.accept(); 
-                GetInventoryRequestHandler handler = new GetInventoryRequestHandler(ligacao, inventory, this);
+                Socket ligacao = serverSocket.accept();
+                BufferedReader in = new BufferedReader(new InputStreamReader(ligacao.getInputStream()));
+                System.out.println("Aceitou ligacao de cliente no endereco " + ligacao.getInetAddress() + " na porta " + ligacao.getPort());
+                String msg = in.readLine();
+                System.out.println("Recebeu: " + msg);
+                GetInventoryRequestHandler handler = new GetInventoryRequestHandler(msg, ligacao, inventory, this);
                 handler.start();
-                /*String ip = ligacao.getInetAddress().toString();
-                if (!ipList.contains(ip) && ip != null) {
-                    ipList.add(ip);
-                }*/
             }
         } catch (IOException e) {
             System.out.println("Erro na execucao do servidor: " + e);
@@ -74,16 +72,16 @@ public class Server extends UnicastRemoteObject implements StockServer{
     @Override
     public String stock_update(String key, int newValue) throws RemoteException {
         String response = inventory.changeQuantity(key, newValue) + "\n" + inventory.toString();
-        if (directNotifications != null && directNotifications.size() > 0) {
-            this.notifyAllClients(response);
-        }
         byte[] signature = signMessage(response);
-        System.out.println(directNotifications.size() + " clients notified");
+        if (directNotifications != null && directNotifications.size() > 0) {
+            this.notifyAllClients(response, Base64.getEncoder().encodeToString(signature));
+        }
+        System.out.println("response: " + response + "-_-" + Base64.getEncoder().encodeToString(signature));
         return response + "-_-" + Base64.getEncoder().encodeToString(signature);
     }
 
     @Override
-    public String subscribe(DirectNotification client) throws RemoteException {
+    public String subscribe(SecureDirectNotificationInterface client) throws RemoteException {
         if (client == null) {
             return "client is null";
         }
@@ -94,7 +92,7 @@ public class Server extends UnicastRemoteObject implements StockServer{
 
     //Not used
     @Override
-    public String unsubscribe(DirectNotification client) throws RemoteException {
+    public String unsubscribe(SecureDirectNotificationInterface client) throws RemoteException {
         if (client == null)
             return "client is null";
         for (ClientConnected clientInfo : directNotifications) {
@@ -106,11 +104,10 @@ public class Server extends UnicastRemoteObject implements StockServer{
         return "Client not found";
     }
 
-    public void notifyAllClients(String message) throws RemoteException {
+    public void notifyAllClients(String message, String signed) throws RemoteException {
         for (ClientConnected client : directNotifications) {
             try {
-                //como dar sign nisto?
-              client.notifyClient(message);
+              client.notifyClient(message, signed);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -134,8 +131,15 @@ public class Server extends UnicastRemoteObject implements StockServer{
                 e.printStackTrace();
             }
         }*/
-        
-        
+    } 
+
+    @Override
+    public PublicKey get_pubKey() throws RemoteException {
+        return this.publicKey;
+    }
+
+    public int getInventoryLength() {
+        return inventory.toString().length();
     }
 
     public void generateKeys() throws IOException {
@@ -145,6 +149,7 @@ public class Server extends UnicastRemoteObject implements StockServer{
             KeyPair keyPair = keyGen.generateKeyPair();
             publicKey = keyPair.getPublic();
             privateKey = keyPair.getPrivate();
+            System.out.println("Public key: " + Base64.getEncoder().encodeToString(publicKey.getEncoded()));
         } catch (NoSuchAlgorithmException e) { 
             e.printStackTrace();
         }
@@ -162,16 +167,17 @@ public class Server extends UnicastRemoteObject implements StockServer{
         }
     }
 
-    public byte[] get_pubkey() {
-        return this.publicKey.getEncoded();
+    public PublicKey get_pubkey() {
+        return this.publicKey;
     }
 
     public static void main(String[] args) throws IOException, RemoteException {
         try {
             Server server = new Server();
+            server.generateKeys();
             server.runRMIServer();
             server.runSocketServer();
-            server.generateKeys();
+            
             System.out.println("Server ready");
         } catch (Exception e) {
             System.out.println("Erro na execucao do servidor: " + e);
