@@ -52,6 +52,9 @@ public class GetInventoryRequestHandler extends Thread {
             } else {
                 response = "STOCK_ERROR: invalid Command";
             }
+        
+        out.println("ACK");
+        out.flush();
 
         out.println(response);
         out.flush();

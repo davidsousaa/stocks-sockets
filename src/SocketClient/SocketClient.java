@@ -50,7 +50,7 @@ public class SocketClient {
 					
 				if (serverPublicKey == null) {
                     try {
-                        String pubKey = sendRequest("GET_PUBKEY").trim();
+                        String pubKey = sendAndWait("GET_PUBKEY").trim();
                         serverPublicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(pubKey)));
                     } catch (Exception e) {
                         System.out.println("STOCK_ERROR: " + e);
@@ -92,7 +92,7 @@ public class SocketClient {
 						break;
 					case 0:
 						request = "CLOSE";
-						sendRequest(request);
+						sendAndWait(request);
 						System.out.println("Terminou a ligacao!");
 						System.exit(0);
 						break;
@@ -101,7 +101,7 @@ public class SocketClient {
 						break;
 				}
 
-				String msg = sendRequest(request);
+				String msg = sendAndWait(request);
                 if (msg != null) {
                     String msgWithSign = null;
                     String msgWithoutSign = null;
@@ -125,8 +125,7 @@ public class SocketClient {
                     } else {
                         System.out.println("STOCK ERROR: Invalid signature");
                     }
-                }
-                else {
+                } else {
 					System.out.println("STOCK ERROR: No response from server");
 				}
 			} catch (Exception e) {
@@ -137,7 +136,7 @@ public class SocketClient {
 		} while (option != 0);
 	}
 
-	private static String sendRequest(String request) {
+	private static String sendAndWait(String request) {
 		Socket client = null;
 		BufferedReader in = null;	
 		PrintWriter out = null;
@@ -155,10 +154,17 @@ public class SocketClient {
 		}
 		
 		try {
-			while ((value  = in.read()) != -1) msg.append((char) value);
-			if (request.equals("CLOSE")) return null;
-			return msg.toString();
-	
+			String acknowledgment = in.readLine();
+       		if (acknowledgment != null && acknowledgment.equals("ACK")) {
+				// Server acknowledged, now wait for the response
+				while ((value = in.read()) != -1) {
+					msg.append((char) value);
+				}
+				return msg.toString();
+			} else {
+				System.out.println("Error: Server did not acknowledge the request.");
+				return null;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -180,7 +186,7 @@ public class SocketClient {
             sign.initVerify(publicKey);
             sign.update(message.getBytes());
 
-            boolean verified = sign.verify(signature);
+            boolean verified = sign.verify(signature);	
 
             return verified;
         } catch (Exception e) {

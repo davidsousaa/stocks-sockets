@@ -36,6 +36,7 @@ public class Server extends UnicastRemoteObject implements StockServer{
                 System.out.println("Aceitou ligacao de cliente no endereco " + ligacao.getInetAddress() + " na porta " + ligacao.getPort());
                 String msg = in.readLine();
                 System.out.println("Recebeu: " + msg);
+                
                 GetInventoryRequestHandler handler = new GetInventoryRequestHandler(msg, ligacao, inventory, this);
                 handler.start();
             }
